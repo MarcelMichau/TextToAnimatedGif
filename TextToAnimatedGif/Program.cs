@@ -3,51 +3,62 @@ using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
 
-namespace TextToAnimatedGif;
+// Defaults
+string text = "Hello!";
+string outputPath = "output.gif";
+int frameCount = 48;
+int depth = 16;
 
-class Program
+// Parse args
+if (args.Length > 0)
 {
-    static void Main(string[] args)
+    text = args[0]; // first arg = text
+}
+
+for (int i = 1; i < args.Length; i++)
+{
+    switch (args[i].ToLower())
     {
-        // Defaults
-        string text = "Hello!";
-        string outputPath = "output.gif";
-        int frameCount = 48;
-        int depth = 16;
+        case "--output":
+        case "-o":
+            if (i + 1 < args.Length) outputPath = args[++i];
+            break;
+        case "--frames":
+        case "-f":
+            if (i + 1 < args.Length && int.TryParse(args[++i], out int f))
+                frameCount = f;
+            break;
+        case "--depth":
+        case "-d":
+            if (i + 1 < args.Length && int.TryParse(args[++i], out int d))
+                depth = d;
+            break;
+    }
+}
 
-        // Parse args
-        if (args.Length > 0)
-        {
-            text = args[0]; // first arg = text
-        }
+Console.WriteLine($"Generating GIF...");
+Console.WriteLine($" Text:     {text}");
+Console.WriteLine($" Output:   {outputPath}");
+Console.WriteLine($" Frames:   {frameCount}");
+Console.WriteLine($" Depth:    {depth}");
 
-        for (int i = 1; i < args.Length; i++)
-        {
-            switch (args[i].ToLower())
-            {
-                case "--output":
-                case "-o":
-                    if (i + 1 < args.Length) outputPath = args[++i];
-                    break;
-                case "--frames":
-                case "-f":
-                    if (i + 1 < args.Length && int.TryParse(args[++i], out int f))
-                        frameCount = f;
-                    break;
-                case "--depth":
-                case "-d":
-                    if (i + 1 < args.Length && int.TryParse(args[++i], out int d))
-                        depth = d;
-                    break;
-            }
-        }
+TextToAnimatedGif.GenerateGif(
+    text: text,
+    outputPath: outputPath,
+    frameCount: frameCount,
+    depth: depth
+);
 
-        Console.WriteLine($"Generating GIF...");
-        Console.WriteLine($" Text:     {text}");
-        Console.WriteLine($" Output:   {outputPath}");
-        Console.WriteLine($" Frames:   {frameCount}");
-        Console.WriteLine($" Depth:    {depth}");
+Console.WriteLine("Done!");
 
+internal class TextToAnimatedGif
+{
+    public static void GenerateGif(
+        string text,
+        string outputPath,
+        int frameCount,
+        int depth)
+    {
         // Calculate dynamic size based on text
         int fontSize = 72;
         int paddingX = (int)(fontSize * 1.2f + depth * 2.0f); // Increased for 3D/animation
@@ -64,26 +75,6 @@ class Program
         int width = textWidth + paddingX;
         int height = textHeight + paddingY;
 
-        GenerateEasedFancyTextGif(
-            text: text,
-            outputPath: outputPath,
-            width: width,
-            height: height,
-            frameCount: frameCount,
-            depth: depth
-        );
-
-        Console.WriteLine("Done!");
-    }
-
-    public static void GenerateEasedFancyTextGif(
-        string text,
-        string outputPath,
-        int width,
-        int height,
-        int frameCount,
-        int depth)
-    {
         using var gif = new Image<Rgba32>(width, height);
 
         for (int i = 0; i < frameCount; i++)
